@@ -1,10 +1,13 @@
 import Config, { VideoDownvotes } from "./config";
-import { CategorySelection, SponsorTime, BackgroundScriptContainer, Registration, VideoID, SponsorHideType, CategorySkipOption } from "./types";
+import { SponsorTime, BackgroundScriptContainer, Registration, VideoID, SponsorHideType } from "./types";
 
 import { getHash, HashedValue } from "../maze-utils/src/hash";
 import { waitFor } from "../maze-utils/src";
 import { findValidElementFromSelector } from "../maze-utils/src/dom";
 import { isSafari } from "../maze-utils/src/config";
+import { asyncRequestToServer } from "./utils/requests";
+import { FetchResponse, logRequest } from "../maze-utils/src/background-request-proxy";
+import { formatJSErrorMessage, getLongErrorMessage } from "../maze-utils/src/formating";
 
 export default class Utils {
     
@@ -198,7 +201,7 @@ export default class Utils {
 
     getSponsorIndexFromUUID(sponsorTimes: SponsorTime[], UUID: string): number {
         for (let i = 0; i < sponsorTimes.length; i++) {
-            if (sponsorTimes[i].UUID === UUID) {
+            if (sponsorTimes[i].UUID && (sponsorTimes[i].UUID.startsWith(UUID) || UUID.startsWith(sponsorTimes[i].UUID))) {
                 return i;
             }
         }
@@ -208,15 +211,6 @@ export default class Utils {
 
     getSponsorTimeFromUUID(sponsorTimes: SponsorTime[], UUID: string): SponsorTime {
         return sponsorTimes[this.getSponsorIndexFromUUID(sponsorTimes, UUID)];
-    }
-
-    getCategorySelection(category: string): CategorySelection {
-        for (const selection of Config.config.categorySelections) {
-            if (selection.name === category) {
-                return selection;
-            }
-        }
-        return { name: category, option: CategorySkipOption.Disabled} as CategorySelection;
     }
 
     /**
@@ -248,6 +242,7 @@ export default class Utils {
             ".main-video-section > .video-container", // Cloudtube
             ".shaka-video-container", // Piped
             "#player-container.ytk-player", // YT Kids
+            "#id-tv-container" // YTTV
         ];
 
         let referenceNode = findValidElementFromSelector(selectors)
@@ -281,6 +276,28 @@ export default class Utils {
     async addHiddenSegment(videoID: VideoID, segmentUUID: string, hidden: SponsorHideType) {
         if ((chrome.extension.inIncognitoContext && !Config.config.trackDownvotesInPrivate)
                 || !Config.config.trackDownvotes) return;
+
+        if (segmentUUID.length < 60) {
+            let segmentIDData: FetchResponse;
+            try {
+                segmentIDData = await asyncRequestToServer("GET", "/api/segmentID", {
+                    UUID: segmentUUID,
+                    videoID
+                });
+            } catch (e) {
+                console.error("[SB] Caught error while trying to resolve the segment UUID to be hidden", e);
+                alert(`${chrome.i18n.getMessage("segmentHideFailed")}\n${formatJSErrorMessage(e)}`);
+                return;
+            }
+
+            if (segmentIDData.ok && segmentIDData.responseText) {
+                segmentUUID = segmentIDData.responseText;
+            } else {
+                logRequest(segmentIDData, "SB", "segment UUID resolution");
+                alert(`${chrome.i18n.getMessage("segmentHideFailed")}\n${getLongErrorMessage(segmentIDData.status, segmentIDData.responseText)}`);
+                return;
+            }
+        }
 
         const hashedVideoID = (await getHash(videoID, 1)).slice(0, 4) as VideoID & HashedValue;
         const UUIDHash = await getHash(segmentUUID, 1);

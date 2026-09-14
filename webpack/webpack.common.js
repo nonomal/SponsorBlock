@@ -93,7 +93,7 @@ module.exports = env => {
 
     return {
         entry: {
-            popup: path.join(__dirname, srcDir + 'popup.ts'),
+            popup: path.join(__dirname, srcDir + 'popup/popup.tsx'),
             background: path.join(__dirname, srcDir + 'background.ts'),
             content: path.join(__dirname, srcDir + 'content.ts'),
             options: path.join(__dirname, srcDir + 'options.ts'),
@@ -161,8 +161,8 @@ module.exports = env => {
                                 const parsed = JSON.parse(content.toString());
                                 if (env.browser.toLowerCase() === "safari") {
                                     parsed.fullName.message = parsed.fullName.message.match(/^.+(?= [-–])/)?.[0] || parsed.fullName.message;
-                                    if (parsed.fullName.message.length > 50) {
-                                        parsed.fullName.message = parsed.fullName.message.slice(0, 47) + "...";
+                                    if (parsed.fullName.message.length > 40) {
+                                        parsed.fullName.message = parsed.fullName.message.slice(0, 37) + "...";
                                     }
 
                                     parsed.Description.message = parsed.Description.message.match(/^.+(?=\. )/)?.[0] || parsed.Description.message;
@@ -189,7 +189,8 @@ module.exports = env => {
             new BuildManifest({
                 browser: env.browser,
                 pretty: env.mode === "production",
-                stream: env.stream
+                stream: env.stream,
+                autoupdate: env.autoupdate,
             }),
             new configDiffPlugin()
         ],

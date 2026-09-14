@@ -1,14 +1,18 @@
 import { Category, CategorySkipOption, VideoID } from "../types";
 import { getHash } from "../../maze-utils/src/hash";
-import Utils from "../utils";
 import { logWarn } from "./logger";
 import { asyncRequestToServer } from "./requests";
+import { getCategorySelection } from "./skipRule";
+import { FetchResponse, logRequest } from "../../maze-utils/src/background-request-proxy";
 
-const utils = new Utils();
+export interface VideoLabelsCacheData {
+    category: Category;
+    hasStartSegment: boolean;
+}
 
 export interface LabelCacheEntry {
     timestamp: number;
-    videos: Record<VideoID, Category>;
+    videos: Record<VideoID, VideoLabelsCacheData>;
 }
 
 const labelCache: Record<string, LabelCacheEntry> = {};
@@ -21,8 +25,15 @@ async function getLabelHashBlock(hashPrefix: string): Promise<LabelCacheEntry | 
         return cachedEntry;
     }
 
-    const response = await asyncRequestToServer("GET", `/api/videoLabels/${hashPrefix}`);
+    let response: FetchResponse;
+    try {
+        response = await asyncRequestToServer("GET", `/api/videoLabels/${hashPrefix}?hasStartSegment=true`);
+    } catch (e) {
+        console.error("[SB] Caught error while fetching video labels", e)
+        return null;
+    }
     if (response.status !== 200) {
+        logRequest(response, "SB", "video labels");
         // No video labels or server down
         labelCache[hashPrefix] = {
             timestamp: Date.now(),
@@ -36,7 +47,10 @@ async function getLabelHashBlock(hashPrefix: string): Promise<LabelCacheEntry | 
 
         const newEntry: LabelCacheEntry = {
             timestamp: Date.now(),
-            videos: Object.fromEntries(data.map(video => [video.videoID, video.segments[0].category])),
+            videos: Object.fromEntries(data.map(video => [video.videoID, {
+                category: video.segments[0]?.category,
+                hasStartSegment: video.hasStartSegment
+            }])),
         };
         labelCache[hashPrefix] = newEntry;
 
@@ -55,16 +69,27 @@ async function getLabelHashBlock(hashPrefix: string): Promise<LabelCacheEntry | 
 }
 
 export async function getVideoLabel(videoID: VideoID): Promise<Category | null> {
-    const prefix = (await getHash(videoID, 1)).slice(0, 3);
+    const prefix = (await getHash(videoID, 1)).slice(0, 4);
     const result = await getLabelHashBlock(prefix);
 
     if (result) {
-        const category = result.videos[videoID];
-        if (category && utils.getCategorySelection(category).option !== CategorySkipOption.Disabled) {
+        const category = result.videos[videoID]?.category;
+        if (category && getCategorySelection(result.videos[videoID]).option !== CategorySkipOption.Disabled) {
             return category;
         } else {
             return null;
         }
+    }
+
+    return null;
+}
+
+export async function getHasStartSegment(videoID: VideoID): Promise<boolean | null> {
+    const prefix = (await getHash(videoID, 1)).slice(0, 4);
+    const result = await getLabelHashBlock(prefix);
+
+    if (result) {
+        return result?.videos[videoID]?.hasStartSegment ?? false;
     }
 
     return null;

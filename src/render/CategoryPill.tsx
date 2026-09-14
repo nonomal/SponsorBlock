@@ -43,7 +43,7 @@ export class CategoryPill {
     }
 
     private async attachToPageInternal(): Promise<void> {
-        let referenceNode = 
+        let referenceNode =
             await waitFor(() => getYouTubeTitleNode());
 
         // Experimental YouTube layout with description on right
@@ -119,7 +119,9 @@ export class CategoryPill {
     }
 
     async setSegment(segment: SponsorTime): Promise<void> {
-        if (this.ref.current?.state?.segment !== segment) {
+        await waitFor(() => this.ref.current);
+
+        if (this.ref.current?.state?.segment !== segment || !this.ref.current?.state?.show) {
             const newState = {
                 segment,
                 show: true,

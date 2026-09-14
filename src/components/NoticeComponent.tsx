@@ -19,6 +19,7 @@ export interface NoticeProps {
     idSuffix?: string;
 
     fadeIn?: boolean;
+    fadeOut?: boolean;
     startFaded?: boolean;
     firstColumn?: React.ReactElement[] | React.ReactElement;
     firstRow?: React.ReactElement;
@@ -159,7 +160,8 @@ class NoticeComponent extends React.Component<NoticeProps, NoticeState> {
                 style={noticeStyle} >
                 <div className={"sponsorSkipNoticeTableContainer" 
                         + (this.props.fadeIn ? " sponsorSkipNoticeFadeIn" : "")
-                        + (this.state.startFaded ? " sponsorSkipNoticeFaded" : "") }>
+                        + (this.state.startFaded ? " sponsorSkipNoticeFaded" : "") 
+                        + (Config.config.prideTheme ? " prideTheme" : "")}>
                     <table className={"sponsorSkipObject sponsorSkipNotice"
                                 + (this.props.limitWidth ? " sponsorSkipNoticeLimitWidth" : "")}>
                         <tbody>
@@ -171,10 +173,18 @@ class NoticeComponent extends React.Component<NoticeProps, NoticeState> {
                                 <td className="noticeLeftIcon">
                                     {/* Logo */}
                                     {!this.props.hideLogo &&
-                                        <SbSvg
-                                            id={"sponsorSkipLogo" + this.idSuffix} 
-                                            fill={this.props.logoFill}
-                                            className="sponsorSkipLogo sponsorSkipObject"/>
+                                        (
+                                            !Config.config.prideTheme ?
+                                                <SbSvg
+                                                    id={"sponsorSkipLogo" + this.idSuffix} 
+                                                    fill={this.props.logoFill}
+                                                    className="sponsorSkipLogo sponsorSkipObject"/>
+                                            :
+                                                <img 
+                                                    id={"sponsorSkipLogo" + this.idSuffix} 
+                                                    src={chrome.runtime.getURL("icons/sb-pride.png")}
+                                                    className="sponsorSkipLogo sponsorSkipObject"/>
+                                        )
                                     }
 
                                     <span id={"sponsorSkipMessage" + this.idSuffix}
@@ -244,7 +254,7 @@ class NoticeComponent extends React.Component<NoticeProps, NoticeState> {
                         id={"skipNoticeTimerText" + this.idSuffix}
                         key="skipNoticeTimerText"
                         className={this.state.countdownMode !== CountdownMode.Timer ? "sbhidden" : ""} >
-                            {chrome.i18n.getMessage("NoticeTimeAfterSkip").replace("{seconds}", this.state.countdownTime.toString())}
+                            {chrome.i18n.getMessage("NoticeTimeAfterSkip").replace("{seconds}", Math.ceil(this.state.countdownTime).toString())}
                     </span>
                 ),(
                     <img 
@@ -326,7 +336,7 @@ class NoticeComponent extends React.Component<NoticeProps, NoticeState> {
             return;
         }
 
-        if (countdownTime == 3) {
+        if (countdownTime == 3 && this.props.fadeOut) {
             //start fade out animation
             const notice = document.getElementById("sponsorSkipNotice" + this.idSuffix);
             notice?.style.removeProperty("animation");

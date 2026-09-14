@@ -3,7 +3,7 @@ import * as CompileConfig from "../config.json";
 import Config from "./config";
 import { Registration } from "./types";
 import "content-scripts-register-polyfill";
-import { sendRealRequestToCustomServer, setupBackgroundRequestProxy } from "../maze-utils/src/background-request-proxy";
+import { sendRealRequestToCustomServer, serializeOrStringify, setupBackgroundRequestProxy } from "../maze-utils/src/background-request-proxy";
 import { setupTabUpdates } from "../maze-utils/src/tab-updates";
 import { generateUserID } from "../maze-utils/src/setup";
 
@@ -13,6 +13,7 @@ import { isFirefoxOrSafari, waitFor } from "../maze-utils/src";
 import { injectUpdatedScripts } from "../maze-utils/src/cleanup";
 import { logWarn } from "./utils/logger";
 import { chromeP } from "../maze-utils/src/browserApi";
+import { getHash } from "../maze-utils/src/hash";
 const utils = new Utils({
     registerFirefoxContentScript,
     unregisterFirefoxContentScript
@@ -43,7 +44,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, callback) {
             chrome.tabs.create({url: chrome.runtime.getURL(request.url)});
             return false;
         case "submitVote":
-            submitVote(request.type, request.UUID, request.category).then(callback);
+            submitVote(request.type, request.UUID, request.category, request.videoID).then(callback);
 
             //this allows the callback to be called later
             return true;
@@ -136,6 +137,14 @@ chrome.runtime.onInstalled.addListener(function () {
                 chrome.tabs.create({url: chrome.runtime.getURL("/permissions/index.html")});
             }
         }
+
+        getHash(Config.config!.userID!).then((userID) => {
+            if (userID == "60eed03c8644b7efa32df06977b3a4c11b62f63518e74a0e29baa1fd449cb54f"
+                || userID == "e347d9878bc4c8400d2d9e1164b1f2e630b04a4ca10f1a9270969a9d53da6ebb"
+            ) {
+                Config.config.prideTheme = true;
+            }
+        });
     }, 1500);
 
     if (!isFirefoxOrSafari()) {
@@ -214,7 +223,7 @@ async function  unregisterFirefoxContentScript(id: string) {
     }
 }
 
-async function submitVote(type: number, UUID: string, category: string) {
+async function submitVote(type: number, UUID: string, category: string, videoID: string) {
     let userID = Config.config.userID;
 
     if (userID == undefined || userID === "undefined") {
@@ -226,34 +235,17 @@ async function submitVote(type: number, UUID: string, category: string) {
     const typeSection = (type !== undefined) ? "&type=" + type : "&category=" + category;
 
     try {
-        const response = await asyncRequestToServer("POST", "/api/voteOnSponsorTime?UUID=" + UUID + "&userID=" + userID + typeSection);
-    
-        if (response.ok) {
-            return {
-                successType: 1,
-                responseText: await response.text()
-            };
-        } else if (response.status == 405) {
-            //duplicate vote
-            return {
-                successType: 0,
-                statusCode: response.status,
-                responseText: await response.text()
-            };
-        } else {
-            //error while connect
-            return {
-                successType: -1,
-                statusCode: response.status,
-                responseText: await response.text()
-            };
-        }
-    } catch (e) {
-        console.error(e);
+        const response = await asyncRequestToServer("POST", "/api/voteOnSponsorTime?UUID=" + UUID + "&videoID=" + videoID + "&userID=" + userID + typeSection);
+
         return {
-            successType: -1,
-            statusCode: -1,
-            responseText: ""
+            status: response.status,
+            ok: response.ok,
+            responseText: await response.text(),
+        };
+    } catch (e) {
+        console.error("Error while voting:", e);
+        return {
+            error: serializeOrStringify(e),
         };
     }
 }

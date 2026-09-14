@@ -30,7 +30,7 @@
       "icons/close.png",
       "icons/skipIcon.svg",
       "icons/refresh.svg",
-      "icons/beep.ogg",
+      "icons/beep.oga",
       "icons/pause.svg",
       "icons/stop.svg",
       "icons/skip.svg",
@@ -53,6 +53,8 @@
       "icons/PlayerInfoIconSponsorBlocker.svg",
       "icons/PlayerDeleteIconSponsorBlocker.svg",
       "icons/dearrow.svg",
+      "icons/sb-pride.png",
+      "icons/pride.svg",
       "popup.html",
       "popup.css",
       "content.css",
@@ -64,7 +66,8 @@
       "libs/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwmBduz8A.woff2",
       "libs/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlBduz8A.woff2"
     ],
-    "matches": ["<all_urls>"]
+    "matches": ["<all_urls>"],
+    "use_dynamic_url": true
   }],
   "content_scripts": [
     {

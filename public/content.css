@@ -11,6 +11,11 @@
 	display: none;
 }
 
+/* Vorapi compatibility */
+#player-api_VORAPI_ELEMENT_ID #previewbar {
+	z-index: 999;
+}
+
 #previewbar {
     overflow: visible;
     padding: 0;
@@ -20,10 +25,19 @@
 	pointer-events: none;
 
 	height: 100%;
-	transform: scaleY(0.6) translateY(-30%) translateY(1.5px);
+	transform: scaleY(0.667) translateY(-30%) translateY(1.5px);
 	z-index: 42;
 
 	transition: transform .1s cubic-bezier(0,0,0.2,1);
+}
+
+/* Prevent bar from covering highlights on YTTV */
+#previewbar.sponsorblock-yttv-container  {
+	z-index: unset;
+}
+
+ytu-time-bar.ytu-storyboard {
+	text-align: center;
 }
 
 /* May 2024 hover preview */
@@ -44,13 +58,27 @@
 }
 
 div:hover > #previewbar.sbNotInvidious {
-	transform: scaleY(1)
+	transform: scaleY(1);
+}
+
+/* Vorapis */
+.v3 #previewbar.sbNotInvidious {
+	transform: scaleY(1);
+}
+.sponsorCategoryTooltipVisible.ytp-progress-tooltip {
+	width: 216px !important;
+  	/* left: 264.308px !important; */
 }
 
 .previewbar {
 	display: inline-block;
 	height: 100%;
 	min-width: 1px;
+}
+
+.previewbar-yttv {
+	height: 10px;
+	top: 14px;
 }
 
 .previewbar.requiredSegment {
@@ -74,17 +102,25 @@ div:hover > #previewbar.sbNotInvidious {
 	display: none !important;
 }
 
-.ytp-tooltip.sponsorCategoryTooltipVisible {
-	transform: translateY(-1em) !important;
-}
-
 /* Pull up for precise seeking */
 .ytp-tooltip.sponsorCategoryTooltipVisible .ytp-tooltip-edu {
 	transform: translateY(-1em) !important;
 }
 
+.ytp-tooltip.sponsorCategoryTooltipVisible {
+	transform: translateY(-1em) !important;
+}
+
 .ytp-tooltip.sponsorCategoryTooltipVisible.sponsorTwoTooltips {
 	transform: translateY(-2em) !important;
+}
+
+.ytp-tooltip.sponsorCategoryTooltipVisible.sponsorHasOriginalTooltip {
+	transform: translateY(-2em) !important;
+}
+
+.ytp-tooltip.sponsorCategoryTooltipVisible.sponsorTwoTooltips.sponsorHasOriginalTooltip {
+	transform: translateY(-3em) !important;
 }
 
 .ytp-big-mode .ytp-tooltip.sponsorCategoryTooltipVisible {
@@ -113,17 +149,17 @@ div:hover > #previewbar.sbNotInvidious {
 }
 
 .ytp-big-mode .ytp-tooltip.sponsorCategoryTooltipVisible.sponsorTwoTooltips > .ytp-tooltip-text-wrapper {
-	transform: translateY(1em) !important;
+	transform: translateY(1.75em) !important;
 }
 
-.ytp-big-mode .ytp-tooltip.sponsorCategoryTooltipVisible > .ytp-tooltip-text-wrapper > .ytp-tooltip-text {
-	display: block !important;
-	transform: translateY(1em) !important;
+.ytp-big-mode .ytp-tooltip.sponsorCategoryTooltipVisible > .ytp-tooltip-text-wrapper .ytp-tooltip-text {
+	display: inline-block !important;
+	transform: translateY(0.75em) !important;
 }
 
-.ytp-big-mode .ytp-tooltip.sponsorCategoryTooltipVisible.sponsorTwoTooltips > .ytp-tooltip-text-wrapper > .ytp-tooltip-text {
-	display: block !important;
-	transform: translateY(2em) !important;
+.ytp-big-mode .ytp-tooltip.sponsorCategoryTooltipVisible.sponsorTwoTooltips > .ytp-tooltip-text-wrapper .ytp-tooltip-text {
+	display: inline-block !important;
+	transform: translateY(0.75em) !important;
 }
 
 div:hover > .sponsorBlockChapterBar {
@@ -152,6 +188,10 @@ div:hover > .sponsorBlockChapterBar {
 	margin: auto;
 }
 
+.sbChapterVoteButton {
+	padding: 0 !important;
+}
+
 .playerButton {
 	vertical-align: top;
 }
@@ -168,6 +208,16 @@ div:hover > .sponsorBlockChapterBar {
 /* Adds back the padding */
 .sbPlayerDownvote svg {
 	padding-right: 3.6px;
+}
+
+.sbButtonYTTV {
+	padding-left: 5px !important;
+}
+
+/* YTTV only */
+.ytu-player-controls > .skipButtonControlBarContainer > div {
+	padding-left: 5px;
+	align-content: center;
 }
 
 .autoHiding {
@@ -216,6 +266,11 @@ div:hover > .sponsorBlockChapterBar {
 
 @keyframes fadeIn {
 	from { opacity: 0; }
+}
+
+@keyframes fadeInToFaded {
+	from { opacity: 0; }
+	to { opacity: 0.5; }
 }
 
 @keyframes fadeOut {
@@ -288,6 +343,10 @@ div:hover > .sponsorBlockChapterBar {
 
 .sponsorSkipNoticeFadeIn {
 	animation: fadeIn 0.5s ease-out;
+}
+
+.sponsorSkipNoticeFadeIn.sponsorSkipNoticeFaded {
+	animation: fadeInToFaded 0.5s ease-out;
 }
 
 .exportCopiedNotice .sponsorSkipNoticeFadeIn {
@@ -632,6 +691,14 @@ input::-webkit-inner-spin-button {
 	color: white;
 }
 
+.hideSegmentSubmitButton {
+	cursor: pointer;
+	margin: auto;
+	top: 0;
+	bottom: 0;
+	position: absolute;
+}
+
 /* Start SelectorComponent */
 
 .sbSelector {
@@ -689,6 +756,13 @@ input::-webkit-inner-spin-button {
 	cursor: pointer;
 	display: flex;
     color: white;
+	align-items: center;
+}
+
+/* July 2025 test UI */
+.ytp-delhi-modern .skipButtonControlBarContainer {
+    height: 48px;
+    margin: auto 0;
 }
 
 .skipButtonControlBarContainer.sbhidden {
@@ -826,6 +900,15 @@ input::-webkit-inner-spin-button {
 	white-space: nowrap;
 }
 
+/* Vorapis V3 support */
+#watch7-content .sponsorBlockCategoryPill {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+#watch7-content .sponsorBlockCategoryPillTitle {
+	font-size: 15px;
+}
+
 .categoryPillClose {
 	display: none;
 	height: 10px;
@@ -889,5 +972,27 @@ input::-webkit-inner-spin-button {
 }
 
 .sponsorblock-chapter-visible {
-	display: inherit !important;
+	display: block !important;
+}
+
+/* Pride theme */
+
+.playerButton.prideTheme:nth-of-type(1) {
+	filter: brightness(50%) sepia(100) saturate(100);
+}
+
+.playerButton.prideTheme:nth-of-type(2) {
+	filter: sepia(100) saturate(100) hue-rotate(0deg);
+}
+
+.playerButton.prideTheme:nth-of-type(3) {
+	filter: sepia(100) saturate(100) hue-rotate(45deg);
+}
+
+.playerButton.prideTheme:nth-of-type(4) {
+	filter: sepia(100) saturate(100) invert() hue-rotate(5deg);
+}
+
+.playerButton.prideTheme:nth-of-type(5) {
+	filter: sepia(100) saturate(100) invert() hue-rotate(35deg);
 }

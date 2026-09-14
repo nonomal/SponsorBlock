@@ -6,6 +6,7 @@ export function getSkippingText(segments: SponsorTime[], autoSkip: boolean): str
     if (autoSkip) {
         let messageId = "";
         switch (segments[0].actionType) {
+            case ActionType.Chapter:
             case ActionType.Skip:
                 messageId = "skipped";
                 break;
@@ -21,6 +22,7 @@ export function getSkippingText(segments: SponsorTime[], autoSkip: boolean): str
     } else {
         let messageId = "";
         switch (segments[0].actionType) {
+            case ActionType.Chapter:
             case ActionType.Skip:
                 messageId = "skip_category";
                 break;
@@ -35,6 +37,23 @@ export function getSkippingText(segments: SponsorTime[], autoSkip: boolean): str
         return chrome.i18n.getMessage(messageId).replace("{0}", categoryName);
     }
 }
+
+export function getUpcomingText(segments: SponsorTime[]): string {
+    const categoryName = chrome.i18n.getMessage(segments.length > 1 ? "multipleSegments" 
+        : "category_" + segments[0].category + "_short") || chrome.i18n.getMessage("category_" + segments[0].category);
+        
+    const messageId = "upcoming";
+    return chrome.i18n.getMessage(messageId).replace("{0}", categoryName);
+}
+
+export function getVoteText(segments: SponsorTime[]): string {
+    const categoryName = chrome.i18n.getMessage(segments.length > 1 ? "multipleSegments" 
+        : "category_" + segments[0].category + "_short") || chrome.i18n.getMessage("category_" + segments[0].category);
+        
+    const messageId = "voted_on";
+    return chrome.i18n.getMessage(messageId).replace("{0}", categoryName);
+}
+
 
 export function getCategorySuffix(category: Category): string {
     if (category.startsWith("poi_")) {
@@ -51,5 +70,4 @@ export function getCategorySuffix(category: Category): string {
 export function shortCategoryName(categoryName: string): string {
     return chrome.i18n.getMessage("category_" + categoryName + "_short") || chrome.i18n.getMessage("category_" + categoryName);
 }
-
 export const DEFAULT_CATEGORY = "chooseACategory";
